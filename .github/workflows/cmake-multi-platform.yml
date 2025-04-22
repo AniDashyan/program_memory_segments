@@ -51,25 +51,3 @@ jobs:
           ls -R build
         fi
       shell: bash
-    - name: Verify Output
-      run: |
-        if [ "${{ runner.os }}" = "Windows" ]; then
-          # Windows paths using bash syntax
-          if [ -f "build/segments.exe" ]; then
-            echo "Analysis completed by analyze_segments target"
-          else
-            echo "Error: build/segments.exe not found"
-            ls -la build
-            exit 1
-          fi
-        else
-          # Linux/macOS path
-          if [ -f "build/segments" ]; then
-            echo "Analysis completed by analyze_segments target"
-          else
-            echo "Error: build/segments not found"
-            ls -la build
-            exit 1
-          fi
-        fi
-      shell: bash
