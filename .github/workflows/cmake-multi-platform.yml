@@ -44,12 +44,17 @@ jobs:
     - name: Debug CMake configuration
       run: |
         cat build/CMakeCache.txt | grep CMAKE_BUILD_TYPE
+        cmake --version
+        which size
+        which objdump
       shell: bash
 
     - name: Build analyze_segments target
       run: |
         cmake --build build --target analyze_segments --config Release
       shell: bash
+      env:
+        MAKEFLAGS: SHELL=/bin/bash
 
     - name: Debug objdump output
       if: runner.os != 'Windows'
@@ -62,28 +67,23 @@ jobs:
         fi
       shell: bash
 
-    - name: Verify Output - Linux/macOS
-      if: runner.os != 'Windows'
+    - name: Verify Output
       run: |
-        echo "Checking for executable..."
-        if [ -f build/segments ]; then
-          echo "Analysis completed by analyze_segments target"
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          if exist build\segments.exe (
+            echo "Analysis completed by analyze_segments target"
+          ) else (
+            echo "Error: build\segments.exe not found"
+            dir build
+            exit 1
+          )
         else
-          echo "Error: build/segments not found"
-          ls -R build
-          exit 1
+          if [ -f build/segments ]; then
+            echo "Analysis completed by analyze_segments target"
+          else
+            echo "Error: build\segments not found"
+            ls -R build
+            exit 1
+          fi
         fi
       shell: bash
-
-    - name: Verify Output - Windows (MinGW)
-      if: runner.os == 'Windows'
-      run: |
-        echo "Checking for executable..."
-        if exist build\segments.exe (
-          echo "Analysis completed by analyze_segments target"
-        ) else (
-          echo "Error: build\segments.exe not found"
-          dir build
-          exit 1
-        )
-      shell: cmd
