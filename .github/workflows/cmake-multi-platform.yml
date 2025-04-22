@@ -41,9 +41,25 @@ jobs:
         CC: ${{ matrix.os == 'Windows' && 'gcc' || '' }}
         CXX: ${{ matrix.os == 'Windows' && 'g++' || '' }}
 
+    - name: Debug CMake configuration
+      run: |
+        cat build/CMakeCache.txt | grep CMAKE_BUILD_TYPE
+      shell: bash
+
     - name: Build analyze_segments target
       run: |
         cmake --build build --target analyze_segments --config Release
+      shell: bash
+
+    - name: Debug objdump output
+      if: runner.os != 'Windows'
+      run: |
+        if [ -f build/segments ]; then
+          objdump -t build/segments || true
+        else
+          echo "Executable not found"
+          ls -R build
+        fi
       shell: bash
 
     - name: Verify Output - Linux/macOS
