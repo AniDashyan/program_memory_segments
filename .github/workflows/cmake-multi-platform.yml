@@ -1,4 +1,4 @@
-name: Build and Run Segments
+name: Build and Analyze Segments
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-run:
+  build-and-analyze:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -18,37 +18,52 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up MinGW (Windows)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msys2-path: mingw64
+        install: mingw-w64-x86_64-gcc mingw-w64-x86_64-binutils mingw-w64-x86_64-cmake
+        update: true
+
     - name: Set up CMake
       uses: jwlawson/actions-setup-cmake@v1.13
 
     - name: Configure CMake
       run: |
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       shell: bash
+      env:
+        CC: ${{ matrix.os == 'Windows' && 'gcc' || '' }}
+        CXX: ${{ matrix.os == 'Windows' && 'g++' || '' }}
 
-    - name: Build project
+    - name: Build analyze_segments target
       run: |
-        cmake --build build --config Debug
+        cmake --build build --target analyze_segments --config Release
       shell: bash
 
-    - name: Run Segments - Linux/macOS
+    - name: Verify Output - Linux/macOS
       if: runner.os != 'Windows'
       run: |
-        echo "Segment sizes:"
-        size build/segments
-        echo "Symbol table (filtered):"
-        objdump -t build/segments | grep -E 'global_var|msg|main|func|\.L\.str' || true
-        echo "local_var: Stack"
-        echo "heap_var: Stack (pointer), Heap (memory)"
+        echo "Checking for executable..."
+        if [ -f build/segments ]; then
+          echo "Analysis completed by analyze_segments target"
+        else
+          echo "Error: build/segments not found"
+          ls -R build
+          exit 1
+        fi
       shell: bash
 
-    - name: Run Segments - Windows (MinGW)
+    - name: Verify Output - Windows (MinGW)
       if: runner.os == 'Windows'
       run: |
-        echo "Segment sizes:"
-        size build\\segments.exe
-        echo "Symbol table (filtered):"
-        objdump -t build\\segments.exe | findstr "global_var msg func main"
-        echo "local_var: Stack"
-        echo "heap_var: Stack (pointer), Heap (memory)"
+        echo "Checking for executable..."
+        if exist build\segments.exe (
+          echo "Analysis completed by analyze_segments target"
+        ) else (
+          echo "Error: build\segments.exe not found"
+          dir build
+          exit 1
+        )
       shell: cmd
