@@ -1,23 +1,19 @@
 name: Build and Analyze Segments
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build-and-analyze:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
     - name: Set up MinGW (Windows)
       if: runner.os == 'Windows'
       uses: msys2/setup-msys2@v2
@@ -25,19 +21,15 @@ jobs:
         msys2-path: mingw64
         install: mingw-w64-x86_64-gcc mingw-w64-x86_64-binutils mingw-w64-x86_64-cmake
         update: true
-
     - name: Set up CMake
       uses: jwlawson/actions-setup-cmake@v1.13
-
     - name: Clean build directory
       run: rm -rf build
       shell: bash
-
     - name: Configure CMake
       run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       shell: bash
-
     - name: Debug CMake configuration
       run: |
         cat build/CMakeCache.txt | grep CMAKE_BUILD_TYPE
@@ -45,12 +37,10 @@ jobs:
         which size
         which objdump
       shell: bash
-
     - name: Build analyze_segments target
       run: |
         cmake --build build --target analyze_segments --config Release
       shell: bash
-
     - name: Debug objdump output
       if: runner.os != 'Windows'
       run: |
@@ -61,23 +51,24 @@ jobs:
           ls -R build
         fi
       shell: bash
-
     - name: Verify Output
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
-          if exist build\\segments.exe (
+          # Windows paths using bash syntax
+          if [ -f "build/segments.exe" ]; then
             echo "Analysis completed by analyze_segments target"
-          ) else (
-            echo "Error: build\\segments.exe not found"
-            dir build
+          else
+            echo "Error: build/segments.exe not found"
+            ls -la build
             exit 1
-          )
+          fi
         else
-          if [ -f build/segments ]; then
+          # Linux/macOS path
+          if [ -f "build/segments" ]; then
             echo "Analysis completed by analyze_segments target"
           else
             echo "Error: build/segments not found"
-            ls -R build
+            ls -la build
             exit 1
           fi
         fi
