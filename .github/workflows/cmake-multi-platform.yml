@@ -37,9 +37,6 @@ jobs:
       run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       shell: bash
-      env:
-        CC: ${{ matrix.os == 'Windows' && 'gcc' || '' }}
-        CXX: ${{ matrix.os == 'Windows' && 'g++' || '' }}
 
     - name: Debug CMake configuration
       run: |
@@ -53,8 +50,6 @@ jobs:
       run: |
         cmake --build build --target analyze_segments --config Release
       shell: bash
-      env:
-        MAKEFLAGS: SHELL=/bin/bash
 
     - name: Debug objdump output
       if: runner.os != 'Windows'
@@ -70,10 +65,10 @@ jobs:
     - name: Verify Output
       run: |
         if [ "${{ runner.os }}" = "Windows" ]; then
-          if exist build\segments.exe (
+          if exist build\\segments.exe (
             echo "Analysis completed by analyze_segments target"
           ) else (
-            echo "Error: build\segments.exe not found"
+            echo "Error: build\\segments.exe not found"
             dir build
             exit 1
           )
@@ -81,7 +76,7 @@ jobs:
           if [ -f build/segments ]; then
             echo "Analysis completed by analyze_segments target"
           else
-            echo "Error: build\segments not found"
+            echo "Error: build/segments not found"
             ls -R build
             exit 1
           fi
