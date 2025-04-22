@@ -42,7 +42,7 @@ git clone https://github.com/AniDashyan/program_memory_segments
 cd program_memory_segments
 
 # Create build directory and run CMake
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug # or (-DCMAKE_BUILD_TYPE=Release)
 cmake --build build --target analyze_segments --config Relese
 ```
 
