@@ -51,9 +51,9 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         echo "Segment sizes:"
-        size build/segments.exe
+        size build\\segments.exe
         echo "Symbol table (filtered):"
-        objdump -t build/segments.exe | findstr "global_var msg func main"
+        objdump -t build\\segments.exe | findstr "global_var msg func main"
         echo "local_var: Stack"
         echo "heap_var: Stack (pointer), Heap (memory)"
       shell: cmd
