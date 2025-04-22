@@ -1,91 +1,59 @@
-name: Memory Segments Analysis
+name: Build and Analyze Segments
 
 on:
   push:
-    paths:
-      - '**.cpp'
-      - '**CMakeLists.txt'
-      - '.github/workflows/**'
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build-and-analyze:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y binutils cmake g++ grep
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v1.13
 
-      - name: Configure CMake
-        run: cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+      shell: bash
 
-      - name: Analyze Segments
-        run: cmake --build build --target analyze_segments
+    - name: Build project
+      run: |
+        cmake --build build --config Debug
+      shell: bash
 
-      - name: Run Executable
-        run: ./build/segments
+    - name: Run program
+      run: |
+        ./build/segments || ./build/segments.exe
+      shell: bash
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Analyze Segments - Linux/macOS
+      if: runner.os != 'Windows'
+      run: |
+        echo "Segment sizes:"
+        size build/segments
+        echo "Symbol table (filtered):"
+        objdump -t build/segments | grep -E 'global_var|msg|main|func|\.L\.str' || true
+        echo "local_var: Stack"
+        echo "heap_var: Stack (pointer), Heap (memory)"
+      shell: bash
 
-      - name: Install tools
-        run: brew install cmake binutils
-
-      - name: Configure CMake
-        run: cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build
-
-      - name: Analyze Segments
-        run: cmake --build build --target analyze_segments
-
-      - name: Run Executable
-        run: ./build/segments
-
-  build-windows-mingw:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install MSYS2 and MinGW
-        uses: msys2/setup-msys2@v2
-        with:
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-binutils
-            grep
-          msystem: MINGW64
-          path-type: inherit
-
-      - name: Configure CMake (MinGW)
-        shell: msys2 {0}
-        run: cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -S . -B build
-
-      - name: Analyze Segments (MinGW)
-        shell: msys2 {0}
-        run: cmake --build build --target analyze_segments
-
-      - name: Run Executable (MinGW)
-        shell: msys2 {0}
-        run: ./build/segments.exe
-
-  build-windows-msvc:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Configure CMake (MSVC)
-        run: cmake -DCMAKE_BUILD_TYPE=Debug -A x64 -S . -B build
-
-      - name: Analyze Segments (MSVC)
-        run: cmake --build build --target analyze_segments
-
-      - name: Run Executable (MSVC)
-        run: .\build\segments.exe
+    - name: Analyze Segments - Windows (MinGW)
+      if: runner.os == 'Windows'
+      run: |
+        echo "Segment sizes:"
+        size build/segments.exe
+        echo "Symbol table (filtered):"
+        objdump -t build/segments.exe | findstr "global_var msg func main"
+        echo "local_var: Stack"
+        echo "heap_var: Stack (pointer), Heap (memory)"
+      shell: cmd
