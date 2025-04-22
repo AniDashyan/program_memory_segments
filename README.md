@@ -44,9 +44,6 @@ cd program_memory_segments
 # Create build directory and run CMake
 cmake -S . -B build
 cmake --build build --target analyze_segments --config Relese
-
-# Run the executable
-./build/segments    # or ./build/segments.exe on Windows
 ```
 
 ### Example Output
