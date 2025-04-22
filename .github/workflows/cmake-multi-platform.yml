@@ -25,6 +25,9 @@ jobs:
       - name: Analyze Segments
         run: cmake --build build --target analyze_segments
 
+      - name: Run Executable
+        run: ./build/segments
+
   build-macos:
     runs-on: macos-latest
     steps:
@@ -39,6 +42,9 @@ jobs:
 
       - name: Analyze Segments
         run: cmake --build build --target analyze_segments
+
+      - name: Run Executable
+        run: ./build/segments
 
   build-windows-mingw:
     runs-on: windows-latest
@@ -65,6 +71,10 @@ jobs:
         shell: msys2 {0}
         run: cmake --build build --target analyze_segments
 
+      - name: Run Executable (MinGW)
+        shell: msys2 {0}
+        run: ./build/segments.exe
+
   build-windows-msvc:
     runs-on: windows-latest
     steps:
@@ -76,3 +86,6 @@ jobs:
 
       - name: Analyze Segments (MSVC)
         run: cmake --build build --target analyze_segments
+
+      - name: Run Executable (MSVC)
+        run: .\build\segments.exe
