@@ -29,6 +29,10 @@ jobs:
     - name: Set up CMake
       uses: jwlawson/actions-setup-cmake@v1.13
 
+    - name: Clean build directory
+      run: rm -rf build
+      shell: bash
+
     - name: Configure CMake
       run: |
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

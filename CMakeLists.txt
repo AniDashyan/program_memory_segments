@@ -39,7 +39,7 @@ if (USE_LINUX)
         COMMAND echo "Variable/Function Sections:"
         COMMAND bash -c "objdump -t ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_FILE} | grep -E 'global_var_initialized|global_var_uninitialized|msg|func|main|\\.L\\.str' || true"
         COMMAND echo "local_var: Stack"
-        COMMAND echo "heap_var: Stack \\(pointer\\), Heap \\(memory\\)"
+        COMMAND bash -c "echo 'heap_var: Stack (pointer), Heap (memory)'"
         DEPENDS ${BINARY_NAME}
         COMMENT "Analyzing ELF binary on Linux/macOS with GNU tools ($<CONFIG>)"
     )
@@ -53,7 +53,8 @@ if (USE_LINUX)
         COMMAND echo "Variable/Function Sections:"
         COMMAND bash -c "objdump -t ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_FILE} | grep -E 'global_var_initialized|global_var_uninitialized|msg|func|main|\\.L\\.str' || true"
         COMMAND echo "local_var: Stack"
-        COMMAND echo "heap_var: Stack \\(pointer\\), Heap \\(memory\\)"
+        COMMAND bash -c "echo 'heap_var: Stack (pointer), Heap (memory)'"
+        DEPENDS ${BINARY_NAME}
         COMMENT "Analyzing ELF binary on Linux/macOS with GNU tools (-O2)"
     )
 elseif (USE_MINGW)
