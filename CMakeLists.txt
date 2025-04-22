@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
-project(program_memory_segments LANGUAGES CXX)
-
+project(program_memory_segments)
 set(CMAKE_CXX_STANDARD 17)
 set(BINARY_NAME segments)
-
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         set(USE_MSVC TRUE)
@@ -17,27 +14,27 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Darwin
     set(USE_LINUX TRUE)
     set(BINARY_FILE "${BINARY_NAME}")
 endif()
-
-
 add_executable(${BINARY_NAME} main.cpp)
-
-
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 endif()
-
 # Analysis tools for each platform
 if (USE_LINUX)
+    # Configure analyze_segments.sh script
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/analyze_segments.sh"
+        "${CMAKE_CURRENT_BINARY_DIR}/analyze_segments.sh"
+        COPYONLY
+    )
+    # Make the script executable
+    execute_process(
+        COMMAND chmod +x "${CMAKE_CURRENT_BINARY_DIR}/analyze_segments.sh"
+    )
     add_custom_target(analyze_segments
         COMMAND ${CMAKE_COMMAND} --build . --target ${BINARY_NAME} --config $<CONFIG>
-        COMMAND echo "Segment Sizes:"
-        COMMAND size ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_FILE}
-        COMMAND echo "Variable/Function Sections:"
-        COMMAND /bin/bash -c "objdump -t ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_FILE} | grep -E 'global_var_initialized|global_var_uninitialized|msg|func|main|\\.L\\.str' || true"
-        COMMAND echo "local_var: Stack"
-        COMMAND echo "heap_var: Stack (pointer), Heap (memory)"
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/analyze_segments.sh ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_FILE}
         DEPENDS ${BINARY_NAME}
         COMMENT "Analyzing ELF binary on Linux/macOS with GNU tools ($<CONFIG>)"
     )
