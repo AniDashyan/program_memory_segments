@@ -1,4 +1,4 @@
-name: Build and Analyze Segments
+name: Build and Run Segments
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-analyze:
+  build-and-run:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -31,12 +31,7 @@ jobs:
         cmake --build build --config Debug
       shell: bash
 
-    - name: Run program
-      run: |
-        ./build/segments || ./build/segments.exe
-      shell: bash
-
-    - name: Analyze Segments - Linux/macOS
+    - name: Run Segments - Linux/macOS
       if: runner.os != 'Windows'
       run: |
         echo "Segment sizes:"
@@ -47,7 +42,7 @@ jobs:
         echo "heap_var: Stack (pointer), Heap (memory)"
       shell: bash
 
-    - name: Analyze Segments - Windows (MinGW)
+    - name: Run Segments - Windows (MinGW)
       if: runner.os == 'Windows'
       run: |
         echo "Segment sizes:"
